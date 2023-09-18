@@ -74,15 +74,17 @@ router.post("/resetpassword", async (req, res) => {
       pass: process.env.PASS
     },
   });
-
   const mailOptions = {
     from: process.env.EMAIL,
     to: user.Email,
     subject: "Password Reset",
-    text: `HI ${user.Name},
-    There was a request to change your password!
-    If you did not make this request, please ignore this email.
-    Otherwise, please click this link to change your password:/${resetToken}`,
+    html: `
+      <p>Hi ${user.Name},
+      please click this <a href="https://resplendent-capybara-108deb.netlify.app/${resetToken}">link</a> to change your password.</p>
+      <p>There was a request to change your password!</p>
+      <p>If you did not make this request, please ignore this email.</p>
+      <p>Otherwise, </p>
+    `,
   };
 
   transporter.sendMail(mailOptions, (error, info) => {
