@@ -1,11 +1,33 @@
 const express = require("express");
 const model = require("../model/model");
 const bcrypt = require("bcrypt");
-const generateToken = require("../GenToken");
+const  authenticate = require("../GenToken");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const router = express.Router();
 const shortid = require("shortid");
+
+
+
+
+
+// const jwt = require("jsonwebtoken");
+
+// Replace 'YOUR_SECRET_KEY' with your actual secret key
+
+
+const generateToken = (id) => jwt.sign(
+    { id },
+    process.env.SECRET_KEY,
+    { expiresIn: "20d" }
+);
+
+
+
+
+
+
+
 
 router.get("/users", async (req, res) => {
   const user = await model.find();
@@ -100,11 +122,7 @@ router.post("/resetpassword", async (req, res) => {
 router.post("/savepassword", async (req, res) => {
   const { NewPassword, resetToken } = req.body;
   
-  // const secretKey = '123456789101112';
 
-  
-
-  // Verify reset token
   try {
     const decoded = jwt.verify(resetToken,process.env.SECRET_KEY );
 
@@ -125,5 +143,73 @@ router.post("/savepassword", async (req, res) => {
     res.status(400).json({ message: "Invalid reset token" });
   }
 });
+
+router.post("/Changepassword", async (req, res) => {
+  const { PreviousPassword, NewPassword } = req.body;
+
+  // Check if the login token is present in the headers
+  const loginToken = req.headers.authorization;
+  console.log(loginToken)
+
+  if (!loginToken) {
+    return res.status(401).json({ message: "Unauthorized: Missing login token" });
+  }
+
+  try {
+    const decoded = jwt.verify(loginToken, process.env.SECRET_KEY);
+
+    const userId = decoded.id; // Assuming your login token has user id information
+    const user = await model.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if the previous password matches the stored hashed password
+    const passwordValidate = await bcrypt.compare(PreviousPassword, user.Password);
+
+    if (!passwordValidate) {
+      return res.status(401).json({ message: "Unauthorized: Incorrect previous password" });
+    }
+
+    // Hash and update the new password
+    const hashedNewPassword = await bcrypt.hash(NewPassword, 10);
+    user.Password = hashedNewPassword;
+    await user.save();
+
+    res.status(200).json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.log("Error verifying login token:", error);
+    res.status(401).json({ message: "Unauthorized: Invalid login token" });
+  }
+});
+
+
+
+router.get("/validuser", authenticate, async (req, res) => {
+  try {
+   
+    const validUserOne = req.rootUser;
+    res.status(200).json({ status: 200, validUserOne });
+  } catch (error) {
+    res.status(500).json({ status: 500, error: "Internal server error" });
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 module.exports = router;
