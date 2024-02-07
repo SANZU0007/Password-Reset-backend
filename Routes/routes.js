@@ -101,11 +101,12 @@ router.post("/resetpassword", async (req, res) => {
     to: user.Email,
     subject: "Password Reset",
     html: `
-      <p>Hi ${user.Name},
-      please click this <a href="https://resplendent-capybara-108deb.netlify.app/save-new-password/${resetToken}">link</a> to change your password.</p>
-      <p>There was a request to change your password!</p>
-      <p>If you did not make this request, please ignore this email.</p>
-      <p>Otherwise, </p>
+    <p>Hi ${user.Name},</p>
+<p>Use the following reset token to change your password: ${resetToken}</p>
+<p>There was a request to change your password!</p>
+<p>If you did not make this request, please ignore this email.</p>
+<p>Otherwise, take the necessary steps to secure your account.</p>
+
     `,
   };
 
